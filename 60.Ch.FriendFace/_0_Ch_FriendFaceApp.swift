@@ -11,7 +11,8 @@ import SwiftUI
 struct _0_Ch_FriendFaceApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            PersonView()
+                .environmentObject(PersonViewModel())
         }
     }
 }

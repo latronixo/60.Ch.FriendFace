@@ -13,20 +13,28 @@ final class PersonViewModel: ObservableObject {
     @Published var isLoading = false
     
     func loadPersons() async {
-        await MainActor.run { self.isLoading = true }
-        await MainActor.run { self.errorMessage = nil }
+        await MainActor.run {
+            self.isLoading = true
+            self.errorMessage = nil
+        }
         
         do {
+            print("Начинаем загрузку данных...")
             let personsAPI = try await NetworkService.shared.fetchPersons()
+            print("Получено \(personsAPI.count) персон")
+                        
             if !personsAPI.isEmpty {
                 await MainActor.run {
                     self.persons = personsAPI
+                    self.isLoading = false
                 }
             }
             
         } catch {
-            self.errorMessage = error.localizedDescription
-            self.isLoading = false
+            await MainActor.run {
+                self.errorMessage = error.localizedDescription
+                self.isLoading = false
+            }
             print("Error to load data from API: \(error.localizedDescription)")
         }
     }

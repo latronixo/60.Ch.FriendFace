@@ -24,12 +24,38 @@ class NetworkService {
         request.setValue("iOSApp", forHTTPHeaderField: "User-Agent  ")
         
         let (data, response) = try await session.data(from: url)
+        print("Получен ответа, размер данных: \(data.count) байт")
         
         guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
             throw URLError(.badServerResponse)
         }
         
-        let decodedResponse = try JSONDecoder().decode(PersonResponse.self, from: data)
-        return decodedResponse.results
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        
+        do {
+            let personsArray = try decoder.decode([Person].self, from: data)
+            print("Успешно декодировано \(personsArray.count) персон")
+            return personsArray
+        } catch {
+            print("Ошибка декодирования массива: \(error)")
+            
+            print("Ошибка декодирования: \(error)")
+            if let decodingError = error as? DecodingError {
+                switch decodingError {
+                case .keyNotFound(let key, let context):
+                    print("Отсутствует ключ: \(key.stringValue), путь: \(context.codingPath)")
+                case .typeMismatch(let type, let context):
+                    print("Несоответствие типа: ожидается \(type), путь: \(context.codingPath)")
+                case .valueNotFound(let type, let context):
+                    print("Значение не найдено: \(type), путь: \(context.codingPath)")
+                case .dataCorrupted(let context):
+                    print("Данные повреждены: \(context)")
+                @unknown default:
+                    print("Неизвестная ошибка декодирования")
+                }
+            }
+            throw error
+        }
     }
 }
