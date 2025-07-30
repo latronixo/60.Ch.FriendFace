@@ -30,12 +30,27 @@ struct PersonView: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
                     List(viewModel.persons) { person in
-                        HStack {
-                            Text("\(person.name)")
-                            Spacer()
-                            Text("\(person.isActive)")
+                        NavigationLink(destination: PersonDetailView(person: person)) {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(person.name)
+                                        .font(.headline)
+                                    Text(person.company)
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                                Spacer()
+                                VStack(alignment: .trailing, spacing: 4) {
+                                    Text("\(person.age) лет")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                    Text(person.isActive ? "Активен" : "Неактивен")
+                                        .font(.caption)
+                                        .foregroundColor(person.isActive ? .green : .red)
+                                }
+                            }
+                            .padding(.vertical, 4)
                         }
-                        .padding()
                     }
                 }
             }
@@ -47,6 +62,15 @@ struct PersonView: View {
             }
         }
     }
+}
+
+#Preview("Загрузка") {
+    PersonView()
+        .environmentObject({
+            let vm = PersonViewModel()
+            vm.isLoading = true
+            return vm
+        }())
 }
 
 #Preview("С данными") {
@@ -79,6 +103,15 @@ struct PersonView: View {
                     friends: []
                 )
             ]
+            return vm
+        }())
+}
+
+#Preview("С ошибкой") {
+    PersonView()
+        .environmentObject({
+            let vm = PersonViewModel()
+            vm.errorMessage = "Ошибка сети"
             return vm
         }())
 }
