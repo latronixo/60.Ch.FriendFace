@@ -6,9 +6,12 @@
 //
 
 import Foundation
+import SwiftData
+import SwiftUI
 
 final class PersonViewModel: ObservableObject {
-    @Published var persons: [PersonAPI] = []
+    @Environment(\.modelContext) var modelContext
+    @Query var persons: [Person] = []
     @Published var errorMessage: String? = nil
     @Published var isLoading = false
     
@@ -18,24 +21,36 @@ final class PersonViewModel: ObservableObject {
             self.errorMessage = nil
         }
         
-        do {
-            print("Начинаем загрузку данных...")
-            let personsAPI = try await NetworkService.shared.fetchPersons()
-            print("Получено \(personsAPI.count) персон")
-                        
-            if !personsAPI.isEmpty {
+        //Если это первый запуск, то загружаем персон из сети
+        if !UserDefaults.standard.bool(forKey: "isNotFirstLaunch") {
+            //при этом сохраняем в UserDefaults, что первый запуск уже был
+            UserDefaults.standard.set(true, forKey: "isNotFirstLaunch")
+            
+            do {
+                print("Начинаем загрузку данных...")
+                let personsAPI = try await NetworkService.shared.fetchPersons()
+                print("Получено \(personsAPI.count) персон")
+                
+                if !personsAPI.isEmpty {
+                    await MainActor.run {
+                        for personAPI in personsAPI {
+                            modelContext.insert(Person(from: personAPI))
+                        }
+                        self.isLoading = false
+                    }
+                }
+                
+            } catch {
                 await MainActor.run {
-                    self.persons = personsAPI
+                    self.errorMessage = error.localizedDescription
                     self.isLoading = false
                 }
+                print("Error to load data from API: \(error.localizedDescription)")
             }
+        } else {
+            //если же это не первый запуск, то загружаем персон из SwiftData
             
-        } catch {
-            await MainActor.run {
-                self.errorMessage = error.localizedDescription
-                self.isLoading = false
-            }
-            print("Error to load data from API: \(error.localizedDescription)")
+            
         }
     }
 }
