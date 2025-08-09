@@ -25,23 +25,3 @@ struct FriendAPI: Codable {
     let id: String
     let name: String
 }
-
-@Model
-struct Person: Codable, Identifiable {
-    let id: String
-    let isActive: Bool
-    let name: String
-    let age: Int
-    let company: String
-    let address: String
-    let about: String
-    let registered: Date
-    let tags: [String]
-    let friends: [Friend]
-}
-
-@Model
-struct Friend: Codable {
-    let id: String
-    let name: String
-}
