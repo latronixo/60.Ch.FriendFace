@@ -9,17 +9,14 @@ import Foundation
 import SwiftData
 import SwiftUI
 
+@MainActor
 final class PersonViewModel: ObservableObject {
-    @Environment(\.modelContext) var modelContext
-    @Query var persons: [Person] = []
     @Published var errorMessage: String? = nil
     @Published var isLoading = false
     
-    func loadPersons() async {
-        await MainActor.run {
-            self.isLoading = true
-            self.errorMessage = nil
-        }
+    func loadPersons(modelContext: ModelContext) async {
+        self.isLoading = true
+        self.errorMessage = nil
         
         //Если это первый запуск, то загружаем персон из сети
         if !UserDefaults.standard.bool(forKey: "isNotFirstLaunch") {
@@ -27,30 +24,26 @@ final class PersonViewModel: ObservableObject {
             UserDefaults.standard.set(true, forKey: "isNotFirstLaunch")
             
             do {
-                print("Начинаем загрузку данных...")
+                print("Начинаем загрузку из сети...")
                 let personsAPI = try await NetworkService.shared.fetchPersons()
                 print("Получено \(personsAPI.count) персон")
                 
                 if !personsAPI.isEmpty {
-                    await MainActor.run {
-                        for personAPI in personsAPI {
-                            modelContext.insert(Person(from: personAPI))
-                        }
-                        self.isLoading = false
+                    let personsToInsert = personsAPI.map { Person(from: $0) }
+                    for person in personsToInsert {
+                        modelContext.insert(person)
                     }
+                    self.isLoading = false
                 }
                 
             } catch {
-                await MainActor.run {
-                    self.errorMessage = error.localizedDescription
-                    self.isLoading = false
-                }
+                self.errorMessage = error.localizedDescription
+                self.isLoading = false
                 print("Error to load data from API: \(error.localizedDescription)")
             }
         } else {
-            //если же это не первый запуск, то загружаем персон из SwiftData
-            
-            
+            //если это не первый запуск, просто выключаем индикатор загрузки
+            self.isLoading = false
         }
     }
 }

@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct PersonDetailView: View {
-    let person: PersonAPI
+    let person: Person
     
     var body: some View {
         ScrollView {
@@ -95,20 +95,8 @@ struct PersonDetailView: View {
 
 #Preview {
     NavigationStack {
-        PersonDetailView(person: PersonAPI(
-            id: "1",
-            isActive: true,
-            name: "John Doe",
-            age: 30,
-            company: "Apple Inc.",
-            address: "123 Main Street, San Francisco, CA",
-            about: "Experienced software developer with passion for iOS development and user experience design.",
-            registered: Date(),
-            tags: ["iOS", "Swift", "SwiftUI", "Development"],
-            friends: [
-                FriendAPI(id: "2", name: "Jane Smith"),
-                FriendAPI(id: "3", name: "Bob Johnson")
-            ]
-        ))
+        let sampleFriend = Friend(id: "2", name: "Jane Smith")
+        let samplePerson = Person(id: "1", isActive: true, name: "Jogn Doe", age: 30, company: "Apple Inc.", address: "Открытое ш. 17 корпус 7", about: "iOS-разработчик", registered: Date(), tags: ["iOS", "Swift", "SwiftUI", "Development"], friends: [sampleFriend])
+        PersonDetailView(person: samplePerson)
     }
 } 

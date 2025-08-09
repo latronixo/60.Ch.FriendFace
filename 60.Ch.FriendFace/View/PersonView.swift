@@ -6,9 +6,12 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct PersonView: View {
-    @EnvironmentObject var viewModel: PersonViewModel
+    @StateObject var viewModel = PersonViewModel()
+    @Environment(\.modelContext) var modelContext
+    @Query(sort: \Person.name) private var persons: [Person]
     
     var body: some View {
         NavigationStack {
@@ -25,11 +28,11 @@ struct PersonView: View {
                             .foregroundStyle(.red   )
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if viewModel.persons.isEmpty {
+                } else if persons.isEmpty {
                     Text("нет данных")
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
-                    List(viewModel.persons) { person in
+                    List(persons) { person in
                         NavigationLink(destination: PersonDetailView(person: person)) {
                             HStack {
                                 VStack(alignment: .leading, spacing: 4) {
@@ -56,62 +59,23 @@ struct PersonView: View {
             }
             .navigationTitle("Persons")
         }
-        .onAppear {
-            Task {
-                await viewModel.loadPersons()
-            }
+        .task {
+            await viewModel.loadPersons(modelContext: modelContext)
         }
     }
 }
 
-#Preview("Загрузка") {
-    PersonView()
-        .environmentObject({
-            let vm = PersonViewModel()
-            vm.isLoading = true
-            return vm
-        }())
-}
-
 #Preview("С данными") {
-    PersonView()
-        .environmentObject({
-            let vm = PersonViewModel()
-            vm.persons = [
-                PersonAPI(
-                    id: "1",
-                    isActive: true,
-                    name: "John Doe",
-                    age: 30,
-                    company: "Apple",
-                    address: "123 Main St",
-                    about: "Software developer",
-                    registered: Date(),
-                    tags: ["iOS", "Swift"],
-                    friends: []
-                ),
-                PersonAPI(
-                    id: "2",
-                    isActive: false,
-                    name: "Jane Smith",
-                    age: 25,
-                    company: "Google",
-                    address: "456 Oak Ave",
-                    about: "Designer",
-                    registered: Date(),
-                    tags: ["UI", "UX"],
-                    friends: []
-                )
-            ]
-            return vm
-        }())
-}
-
-#Preview("С ошибкой") {
-    PersonView()
-        .environmentObject({
-            let vm = PersonViewModel()
-            vm.errorMessage = "Ошибка сети"
-            return vm
-        }())
+    do {
+        let config = ModelConfiguration(isStoredInMemoryOnly: true)
+        let container = try ModelContainer(for: Person.self, configurations: config)
+        
+        let samplePerson = Person(id: "1", isActive: true, name: "John Doe", age: 30, company: "Apple", address: "123 Main St", about: "Dev", registered: .now, tags: ["swift"], friends: [])
+                container.mainContext.insert(samplePerson)
+                
+        return PersonView()
+            .modelContainer(container)
+    } catch {
+        return Text("Failed to create preview: \(error.localizedDescription)")
+    }
 }
