@@ -60,7 +60,11 @@ struct PersonView: View {
             .navigationTitle("Persons")
         }
         .task {
-            await viewModel.loadPersons(modelContext: modelContext)
+            //Загружаем данные, только если база данных пуста
+            if persons.isEmpty {
+                //передаем потокобезопасный ModelContainer во ViewModel
+                await viewModel.loadPersons(container: modelContext.container)
+            }
         }
     }
 }

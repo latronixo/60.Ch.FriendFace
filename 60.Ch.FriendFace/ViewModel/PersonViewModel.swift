@@ -9,14 +9,15 @@ import Foundation
 import SwiftData
 import SwiftUI
 
-@MainActor
 final class PersonViewModel: ObservableObject {
     @Published var errorMessage: String? = nil
     @Published var isLoading = false
     
-    func loadPersons(modelContext: ModelContext) async {
-        self.isLoading = true
-        self.errorMessage = nil
+    func loadPersons(container: ModelContainer) async {
+        await MainActor.run {
+            self.isLoading = true
+            self.errorMessage = nil
+        }
         
         //Если это первый запуск, то загружаем персон из сети
         if !UserDefaults.standard.bool(forKey: "isNotFirstLaunch") {
@@ -25,24 +26,33 @@ final class PersonViewModel: ObservableObject {
             
             do {
                 print("Начинаем загрузку из сети...")
-                let personsAPI = try await NetworkService.shared.fetchPersons()
+                let personsAPI = try await NetworkService.shared.fetchPersons()     //в сеть запрос идет в фоне
                 print("Получено \(personsAPI.count) персон")
+                
+                //создаем новый контекст для фоновой работы
+                let backgroundContext = ModelContext(container)
                 
                 if !personsAPI.isEmpty {
                     let personsToInsert = personsAPI.map { Person(from: $0) }
                     for person in personsToInsert {
-                        modelContext.insert(person)
+                        backgroundContext.insert(person)
                     }
-                    self.isLoading = false
                 }
                 
+                //Сохраняем изменения, сделанные в фоновом контексте
+                try backgroundContext.save()
+                print("данные упешно сохранены в SwiftData")
+                
             } catch {
-                self.errorMessage = error.localizedDescription
-                self.isLoading = false
+                await MainActor.run {
+                    self.errorMessage = error.localizedDescription
+                }
                 print("Error to load data from API: \(error.localizedDescription)")
             }
-        } else {
-            //если это не первый запуск, просто выключаем индикатор загрузки
+        }
+        
+        //Обновляем isLoading на главном потоке в любом случае
+        await MainActor.run {
             self.isLoading = false
         }
     }
