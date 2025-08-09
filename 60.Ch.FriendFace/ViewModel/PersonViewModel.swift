@@ -8,7 +8,7 @@
 import Foundation
 
 final class PersonViewModel: ObservableObject {
-    @Published var persons: [Person] = []
+    @Published var persons: [PersonAPI] = []
     @Published var errorMessage: String? = nil
     @Published var isLoading = false
     

@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 @main
 struct _0_Ch_FriendFaceApp: App {
@@ -13,6 +14,7 @@ struct _0_Ch_FriendFaceApp: App {
         WindowGroup {
             PersonView()
                 .environmentObject(PersonViewModel())
+                .modelContainer(for: Person.self)
         }
     }
 }

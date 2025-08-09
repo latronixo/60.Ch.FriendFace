@@ -13,7 +13,7 @@ class NetworkService {
     
     private let session: URLSession = .shared
     
-    func fetchPersons() async throws -> [Person] {
+    func fetchPersons() async throws -> [PersonAPI] {
         let urlString = "https://www.hackingwithswift.com/samples/friendface.json"
         
         guard let url = URL(string: urlString) else {
@@ -34,7 +34,7 @@ class NetworkService {
         decoder.dateDecodingStrategy = .iso8601
         
         do {
-            let personsArray = try decoder.decode([Person].self, from: data)
+            let personsArray = try decoder.decode([PersonAPI].self, from: data)
             print("Успешно декодировано \(personsArray.count) персон")
             return personsArray
         } catch {

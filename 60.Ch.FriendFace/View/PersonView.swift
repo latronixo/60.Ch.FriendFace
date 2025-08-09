@@ -78,7 +78,7 @@ struct PersonView: View {
         .environmentObject({
             let vm = PersonViewModel()
             vm.persons = [
-                Person(
+                PersonAPI(
                     id: "1",
                     isActive: true,
                     name: "John Doe",
@@ -90,7 +90,7 @@ struct PersonView: View {
                     tags: ["iOS", "Swift"],
                     friends: []
                 ),
-                Person(
+                PersonAPI(
                     id: "2",
                     isActive: false,
                     name: "Jane Smith",
